@@ -3,7 +3,7 @@
  *
  * A jQuery plugin to clone form elements in a nested manner, maintaining accessibility.
  *
- * @author Wanderson Bragança <wanderson.wbc@gmail.com>
+ * @author Wanderson BraganÁa <wanderson.wbc@gmail.com>
  */
 (function ($) {
     var pluginName = 'yiiDynamicForm';
@@ -39,11 +39,11 @@
         },
 
         addItem: function (widgetOptions, e, $elem) {
-           _addItem(widgetOptions, e, $elem);
+            _addItem(widgetOptions, e, $elem);
         },
 
         deleteItem: function (widgetOptions, e, $elem) {
-           _deleteItem(widgetOptions, e, $elem);
+            _deleteItem(widgetOptions, e, $elem);
         },
 
         updateContainer: function () {
@@ -66,36 +66,17 @@
         });
 
         $template.find('input, textarea, select').each(function() {
-            if ($(this).is(':checkbox') || $(this).is(':radio')) {
-                var type         = ($(this).is(':checkbox')) ? 'checkbox' : 'radio';
-                var inputName    = $(this).attr('name');
-                var $inputHidden = $template.find('input[type="hidden"][name="' + inputName + '"]').first();
-                var count        = $template.find('input[type="' + type +'"][name="' + inputName + '"]').length;
-
-                if ($inputHidden && count === 1) {
-                    $(this).val(1);
-                    $inputHidden.val(0);
-                }
-
-                $(this).prop('checked', false);
-            } else if($(this).is('select')) {
-                $(this).find('option:selected').removeAttr("selected");
-            } else {
-                $(this).val(''); 
-            }
+            $(this).val('');
         });
 
-        // remove "error/success" css class
-        var yiiActiveFormData = $('#' + widgetOptions.formId).yiiActiveForm('data');
-        if (typeof yiiActiveFormData !== "undefined" && typeof yiiActiveFormData.settings !== "undefined" ) {
-            if(typeof yiiActiveFormData.settings.errorCssClass !== "undefined" && yiiActiveFormData.settings.errorCssClass.length > 0) {
-                $template.find('.' + yiiActiveFormData.settings.errorCssClass).removeClass(yiiActiveFormData.settings.errorCssClass);
+        $template.find('input[type="checkbox"], input[type="radio"]').each(function() {
+            var inputName = $(this).attr('name');
+            var $inputHidden = $template.find('input[type="hidden"][name="' + inputName + '"]').first();
+            if ($inputHidden) {
+                $(this).val(1);
+                $inputHidden.val(0);
             }
-
-            if(typeof yiiActiveFormData.settings.successCssClass !== "undefined" && yiiActiveFormData.settings.successCssClass.length > 0) {
-                $template.find('.' + yiiActiveFormData.settings.successCssClass).removeClass(yiiActiveFormData.settings.successCssClass);
-            }
-        }
+        });
 
         return $template;
     };
@@ -122,7 +103,7 @@
         var count = _count($elem, widgetOptions);
 
         if (count < widgetOptions.limit) {
-            $toclone = $(widgetOptions.widgetItem).first();
+            $toclone = widgetOptions.template;
             $newclone = $toclone.clone(false, false);
 
             if (widgetOptions.insertPosition === 'top') {
@@ -206,7 +187,7 @@
                 matches[2] = matches[2].substring(1, matches[2].length - 1);
                 var identifiers = matches[2].split('-');
                 identifiers[0] = index;
-                
+
                 if (identifiers.length > 1) {
                     var widgetsOptions = [];
                     $elem.parents('div[data-dynamicform]').each(function(i){
@@ -215,7 +196,8 @@
 
                     widgetsOptions = widgetsOptions.reverse();
                     for (var i = identifiers.length - 1; i >= 1; i--) {
-                        identifiers[i] = $elem.closest(widgetsOptions[i].widgetItem).index();
+                        //identifiers[i] = $elem.closest(widgetsOptions[i].widgetItem).index();
+                        identifiers[i] = $elem.closest(widgetsOptions[i-1].widgetItem).index()
                     }
                 }
 
@@ -232,7 +214,7 @@
                 $(this).removeClass('field-' + id).addClass('field-' + newID);
             });
             // update "for" attribute
-            $elem.closest(widgetOptions.widgetItem).find("label[for='" + id + "']").attr('for',newID); 
+            $elem.closest(widgetOptions.widgetItem).find("label[for='" + id + "']").attr('for',newID);
         }
 
         return newID;
@@ -325,34 +307,8 @@
         });
     };
 
-    var _restoreKrajeeDepdrop = function($elem) {
-        var configDepdrop = $.extend(true, {}, eval($elem.attr('data-krajee-depdrop')));
-        var inputID = $elem.attr('id');
-        var matchID = inputID.match(regexID);
-
-        if (matchID && matchID.length === 4) {
-            for (index = 0; index < configDepdrop.depends.length; ++index) {
-                var match = configDepdrop.depends[index].match(regexID);
-                if (match && match.length === 4) {
-                    configDepdrop.depends[index] = match[1] + matchID[2] + match[3];
-                }
-            }
-        }
-
-        $elem.depdrop(configDepdrop);
-    };
-
     var _restoreSpecialJs = function(widgetOptions) {
         var widgetOptionsRoot = _getWidgetOptionsRoot(widgetOptions);
-
-        // "jquery.inputmask"
-        var $hasInputmask = $(widgetOptionsRoot.widgetItem).find('[data-plugin-inputmask]');
-        if ($hasInputmask.length > 0) {
-            $hasInputmask.each(function() {
-                $(this).inputmask('remove');
-                $(this).inputmask(eval($(this).attr('data-plugin-inputmask')));
-            });
-        }
 
         // "kartik-v/yii2-widget-datepicker"
         var $hasDatepicker = $(widgetOptionsRoot.widgetItem).find('[data-krajee-datepicker]');
@@ -432,6 +388,21 @@
         }
 
         // "kartik-v/yii2-widget-depdrop"
+        var _restoreKrajeeDepdrop = function($elem) {
+            var configDepdrop = $.extend(true, {}, eval($elem.attr('data-krajee-depdrop')));
+            var inputID = $elem.attr('id');
+            var matchID = inputID.match(regexID);
+
+            if (matchID && matchID.length === 4) {
+                for (index = 0; index < configDepdrop.depends.length; ++index) {
+                    var match = configDepdrop.depends[index].match(regexID);
+                    if (match && match.length === 4) {
+                        configDepdrop.depends[index] = match[1] + matchID[2] + match[3];
+                    }
+                }
+            }
+            $elem.depdrop(configDepdrop);
+        };
         var $hasDepdrop = $(widgetOptionsRoot.widgetItem).find('[data-krajee-depdrop]');
         if ($hasDepdrop.length > 0) {
             $hasDepdrop.each(function() {
@@ -440,6 +411,8 @@
                     $(this).unbind();
                     _restoreKrajeeDepdrop($(this));
                 }
+                var configDepdrop = eval($(this).attr('data-krajee-depdrop'));
+                $(this).depdrop(configDepdrop);
             });
         }
 
@@ -461,22 +434,52 @@
                     $(this).unbind();
                     _restoreKrajeeDepdrop($(this));
                 }
-
-                $.when($('#' + id).select2(configSelect2)).done(initSelect2Loading(id, '.select2-container--krajee'));
+                var s2LoadingFunc = typeof initSelect2Loading != 'undefined' ? initSelect2Loading : initS2Loading;
+                var s2OpenFunc = typeof initSelect2DropStyle != 'undefined' ? initSelect2Loading : initS2Loading;
+                $.when($('#' + id).select2(configSelect2)).done(s2LoadingFunc(id, '.select2-container--krajee'));
 
                 var kvClose = 'kv_close_' + id.replace(/\-/g, '_');
 
                 $('#' + id).on('select2:opening', function(ev) {
-                    initSelect2DropStyle(id, kvClose, ev);
+                    s2OpenFunc(id, kvClose, ev);
                 });
 
                 $('#' + id).on('select2:unselect', function() {
                     window[kvClose] = true;
                 });
 
-               if (configDepdrop) {
+                if (configDepdrop) {
                     var loadingText = (configDepdrop.loadingText) ? configDepdrop.loadingText : 'Loading ...';
                     initDepdropS2(id, loadingText);
+                }
+            });
+        }
+
+
+        // "kartik-v/yii2-widget-select2"
+        var $hasSelect2 = $(widgetOptionsRoot.widgetItem).find('[data-krajee-select2]');
+        if ($hasSelect2.length > 0) {
+            $hasSelect2.each(function() {
+                var id = $(this).attr('id');
+                var configSelect2 = eval($(this).attr('data-krajee-select2'));
+                $.when($('#' + id).select2(configSelect2)).done(initS2Loading(id));
+                $('#' + id).on('select2-open', function() {
+                    initSelect2DropStyle(id)
+                });
+
+                $('#' + id).on('select2-open', function() {
+                    initS2Open(id)
+                });
+
+                if ($(this).attr('data-krajee-depdrop')) {
+                    $(this).on('depdrop.beforeChange', function(e,i,v) {
+                        var configDepdrop = eval($(this).attr('data-krajee-depdrop'));
+                        var loadingText = (configDepdrop.loadingText)? configDepdrop.loadingText : 'Loading ...';
+                        $('#' + id).select2('data', {text: loadingText});
+                    });
+                    $(this).on('depdrop.change', function(e,i,v,c) {
+                        $('#' + id).select2('val', $('#' + id).val());
+                    });
                 }
             });
         }
